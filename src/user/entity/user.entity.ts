@@ -1,4 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { RoleEnum } from './role.enum';
 
 @Entity()
@@ -8,15 +14,18 @@ export class User {
 
   @Column({
     nullable: false,
-    length: 50,
   })
   first_name: string;
 
   @Column({
     nullable: false,
-    length: 50,
   })
   second_name: string;
+
+  @Column({
+    nullable: false,
+  })
+  nickname: string;
 
   @Column({
     unique: true,
@@ -44,4 +53,10 @@ export class User {
     default: RoleEnum.USER,
   })
   role: RoleEnum;
+
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  created_at: Date;
+
+  @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  updated_at: Date;
 }
