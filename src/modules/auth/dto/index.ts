@@ -1,4 +1,4 @@
-import { JwtTokenConfigDto } from './jwt-token-config.dto';
 import { LoginDto } from './login.dto';
+import { TokenOutputDto } from './token-output.dto';
 
-export { JwtTokenConfigDto, LoginDto };
+export { LoginDto, TokenOutputDto };

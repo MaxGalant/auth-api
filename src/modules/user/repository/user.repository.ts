@@ -3,6 +3,8 @@ import { DataSource, EntityManager, Repository, UpdateResult } from 'typeorm';
 import { User } from '../entity';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { CreateUserDto } from '../dto';
+import { UpdateUserDto } from '../dto/update-user.dto';
+import { GoogleUserDto } from '../../auth/dto/google-user.dto';
 
 export interface IUserRepository {
   saveUser(
@@ -11,9 +13,19 @@ export interface IUserRepository {
     otp: string,
     manager: EntityManager,
   ): Promise<User>;
+  saveGoogleUser(
+    googleUserPayload: GoogleUserDto,
+    manager: EntityManager,
+  ): Promise<User>;
+
+  updateUser(
+    userId: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UpdateResult>;
+  updateRefreshToken(userId: string, token: string): Promise<UpdateResult>;
+
   findByEmailAndActive(email: string): Promise<User>;
   findByEmail(email: string): Promise<User>;
-  updateRefreshToken(userId: string, token: string): Promise<UpdateResult>;
   findById(id: string): Promise<User>;
 }
 
@@ -22,7 +34,7 @@ export class UserRepository
   extends Repository<User>
   implements IUserRepository
 {
-  private logger = new Logger('UserRepository');
+  private logger = new Logger('User Repository');
 
   constructor(
     @InjectDataSource()
@@ -106,6 +118,44 @@ export class UserRepository
     } catch (error) {
       this.logger.error(
         `Something went wrong when finding a user by id: ${id}`,
+        error?.stack,
+      );
+    }
+  }
+
+  async saveGoogleUser(
+    googleCreateUserPayload: GoogleUserDto,
+    manager: EntityManager,
+  ): Promise<User> {
+    this.logger.log(
+      `Saving a google user with email: ${googleCreateUserPayload.email}`,
+    );
+
+    try {
+      return manager.save(User, {
+        first_name: googleCreateUserPayload.firstName,
+        second_name: googleCreateUserPayload.lastName,
+        email: googleCreateUserPayload.email,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Something went wrong when saving a google user with email: ${googleCreateUserPayload.email}`,
+        error?.stack,
+      );
+    }
+  }
+
+  async updateUser(
+    userId: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UpdateResult> {
+    this.logger.log(`Updating a user with id:${userId}`);
+
+    try {
+      return this.update({ id: userId }, updateUserDto);
+    } catch (error) {
+      this.logger.error(
+        `Something went wrong when updating a user with id:${userId}`,
         error?.stack,
       );
     }

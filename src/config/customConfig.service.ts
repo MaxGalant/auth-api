@@ -1,8 +1,9 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { JwtTokenConfigDto } from '../modules/auth/dto';
+import { config } from 'dotenv';
+import { GoogleCredentialsDto } from './dto/google-credentials.dto';
+import { JwtTokenConfigDto } from './dto/jwt-token-config.dto';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-require('dotenv').config();
+config();
 
 export class CustomConfigService {
   constructor(private env: { [k: string]: string | undefined }) {}
@@ -66,6 +67,13 @@ export class CustomConfigService {
 
   public getRefreshTokenSecretKey(): string {
     return this.getEnvVariableValue('REFRESH_TOKEN_SECRET');
+  }
+
+  public getGoogleCredentials(): GoogleCredentialsDto {
+    return {
+      clientID: this.getEnvVariableValue('GOOGLE_CLIENT_ID'),
+      clientSecret: this.getEnvVariableValue('GOOGLE_SECRET'),
+    };
   }
 }
 const configService = new CustomConfigService(process.env);

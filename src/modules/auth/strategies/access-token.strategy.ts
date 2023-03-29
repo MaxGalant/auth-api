@@ -7,7 +7,7 @@ import {
   IUserRepository,
   UserRepository,
 } from '../../user/repository/user.repository';
-import { JwtTokenConfigDto } from '../dto';
+import { JwtTokenConfigDto } from '../../../config/dto/jwt-token-config.dto';
 
 @Injectable()
 export class AccessTokenStrategy extends PassportStrategy(Strategy) {
@@ -18,15 +18,15 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy) {
     @InjectRepository(UserRepository)
     private readonly userRepository: IUserRepository,
   ) {
+    const config = configService.getAccessTokenConfig();
+
     super({
       secretOrKey: configService.getAccessTokenPublicKey(),
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      audience: process.env.AUTH_AUDIENCE,
-      issuer: process.env.AUTH_ISS,
+      audience: config.aud,
+      issuer: config.iss,
       algorithms: ['RS256'],
     });
-
-    this.tokenConfig = configService.getAccessTokenConfig();
   }
 
   async validate(payload: any) {

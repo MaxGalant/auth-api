@@ -12,31 +12,23 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({
-    nullable: false,
-  })
+  @Column()
   first_name: string;
 
-  @Column({
-    nullable: false,
-  })
+  @Column()
   second_name: string;
 
-  @Column({
-    nullable: false,
-  })
+  @Column({ nullable: true })
   nickname: string;
 
   @Column({
     unique: true,
-    length: 100,
-    nullable: false,
   })
   email: string;
 
   @Column({
-    length: 150,
-    nullable: false,
+    length: 30,
+    nullable: true,
   })
   password: string;
 
@@ -46,7 +38,7 @@ export class User {
   })
   phone_number: string;
 
-  @Column()
+  @Column({ nullable: true })
   otp: string;
 
   @Column({ nullable: true })

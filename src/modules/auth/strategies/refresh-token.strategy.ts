@@ -8,8 +8,8 @@ import {
   UserRepository,
 } from '../../user/repository/user.repository';
 import { Request } from 'express';
-import { JwtTokenConfigDto } from '../dto';
 import { User } from '../../user/entity';
+import { JwtTokenConfigDto } from '../../../config/dto/jwt-token-config.dto';
 
 @Injectable()
 export class RefreshTokenStrategy extends PassportStrategy(
