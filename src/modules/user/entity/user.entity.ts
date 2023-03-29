@@ -46,6 +46,15 @@ export class User {
   })
   phone_number: string;
 
+  @Column()
+  otp: string;
+
+  @Column({ nullable: true })
+  refresh_token: string;
+
+  @Column({ default: false })
+  active: boolean;
+
   @Column({
     type: 'enum',
     nullable: false,

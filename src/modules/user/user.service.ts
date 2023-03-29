@@ -1,10 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CreateUserDto, UserProfileInfoDto } from './dto';
 import { IUserRepository, UserRepository } from './repository/user.repository';
-import { ErrorDto } from '../utills/error.dto';
+import { ErrorDto } from '../../utills/error.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { plainToClass } from 'class-transformer';
+import * as bcrypt from 'bcrypt';
 
 export interface IUserService {
   createUser(createUserDto: CreateUserDto): Promise<any>;
@@ -12,7 +13,9 @@ export interface IUserService {
 
 @Injectable()
 export class UserService implements IUserService {
-  private logger = new Logger('UserService');
+  private logger = new Logger('User Service');
+
+  private hashSalt = 10;
 
   constructor(
     @InjectRepository(UserRepository)
@@ -20,7 +23,9 @@ export class UserService implements IUserService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async createUser(createUserDto: CreateUserDto): Promise<any | ErrorDto> {
+  async createUser(
+    createUserDto: CreateUserDto,
+  ): Promise<UserProfileInfoDto | ErrorDto> {
     this.logger.log('User creating');
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -32,7 +37,7 @@ export class UserService implements IUserService {
     await queryRunner.startTransaction();
 
     try {
-      const { email } = createUserDto;
+      const { email, password } = createUserDto;
 
       const user = await this.userRepository.findByEmail(email);
 
@@ -40,12 +45,18 @@ export class UserService implements IUserService {
         return new ErrorDto(
           409,
           'Conflict',
-          `User with email already exist ${email}`,
+          `User with email already exist ${email} in system`,
         );
       }
 
+      const hashPassword = await bcrypt.hash(password, this.hashSalt);
+
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
       const newUser = await this.userRepository.saveUser(
         createUserDto,
+        hashPassword,
+        otp,
         manager,
       );
 
