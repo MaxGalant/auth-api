@@ -1,4 +1,7 @@
 import { LoginDto } from './login.dto';
 import { TokenOutputDto } from './token-output.dto';
+import { GoogleUserDto } from './google-user.dto';
+import { VerifyOtpDto } from './verify-otp.dto';
+import { ResendOtpDto } from './resend-otp.dto';
 
-export { LoginDto, TokenOutputDto };
+export { LoginDto, TokenOutputDto, GoogleUserDto, VerifyOtpDto, ResendOtpDto };

@@ -8,6 +8,7 @@ import { CustomConfigModule } from '../../config/customConfig.module';
 import { UserModule } from '../user/user.module';
 import { AccessTokenStrategy, GoogleStrategy } from './strategies';
 import { RefreshTokenStrategy } from './strategies';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { RefreshTokenStrategy } from './strategies';
     JwtModule.register({}),
     UserModule,
     CustomConfigModule,
+    MailModule,
   ],
   controllers: [AuthController],
   providers: [

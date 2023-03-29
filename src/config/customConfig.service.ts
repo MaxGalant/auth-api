@@ -1,7 +1,7 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { config } from 'dotenv';
-import { GoogleCredentialsDto } from './dto/google-credentials.dto';
-import { JwtTokenConfigDto } from './dto/jwt-token-config.dto';
+import { GoogleCredentialsDto, MailgunCredentialsDto } from './dto';
+import { JwtTokenConfigDto } from './dto';
 
 config();
 
@@ -73,6 +73,13 @@ export class CustomConfigService {
     return {
       clientID: this.getEnvVariableValue('GOOGLE_CLIENT_ID'),
       clientSecret: this.getEnvVariableValue('GOOGLE_SECRET'),
+    };
+  }
+
+  public getMailGunCredentials(): MailgunCredentialsDto {
+    return {
+      apiKey: this.getEnvVariableValue('MAILGUN_API_KEY'),
+      domain: this.getEnvVariableValue('MAILGUN_DOMAIN'),
     };
   }
 }

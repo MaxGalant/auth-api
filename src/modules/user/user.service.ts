@@ -6,7 +6,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { plainToClass } from 'class-transformer';
 import * as bcrypt from 'bcrypt';
-import { GoogleUserDto } from '../auth/dto/google-user.dto';
+import { GoogleUserDto } from '../auth/dto';
+import { MailService } from '../mail/mail.service';
 
 export interface IUserService {
   createUser(
@@ -27,6 +28,7 @@ export class UserService implements IUserService {
     @InjectRepository(UserRepository)
     private readonly userRepository: IUserRepository,
     private readonly dataSource: DataSource,
+    private readonly mailService: MailService,
   ) {}
 
   async createUser(
@@ -58,6 +60,16 @@ export class UserService implements IUserService {
       const hashPassword = await bcrypt.hash(password, this.hashSalt);
 
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+      const mailSubject = 'Otp code';
+
+      const mailText = `Your otp: ${otp}`;
+
+      await this.mailService.sendEmail(
+        createUserDto.email,
+        mailSubject,
+        mailText,
+      );
 
       const newUser = await this.userRepository.saveUser(
         createUserDto,
@@ -105,7 +117,7 @@ export class UserService implements IUserService {
       if (user && user.active) {
         return plainToClass(UserProfileInfoDto, user);
       } else if (user && !user.active) {
-        const activatedUser = this.userRepository.updateUser(user.id, {
+        const activatedUser = this.userRepository.updateUserFields(user.id, {
           first_name: googleUserDto.firstName,
           second_name: googleUserDto.lastName,
           active: true,

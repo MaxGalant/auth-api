@@ -2,7 +2,7 @@ import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { ErrorDto } from '../../utills/error.dto';
 import { CreateUserDto, UserProfileInfoDto } from '../user/dto';
-import { LoginDto } from './dto';
+import { LoginDto, ResendOtpDto, VerifyOtpDto } from './dto';
 import { AuthService } from './auth.service';
 import { TokenOutputDto } from './dto';
 import { RefreshTokenGuard } from './gurds';
@@ -44,5 +44,17 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   googleAuthRedirect(@Req() req) {
     return this.authService.googleLogin(req);
+  }
+
+  @Post('verifyOtp')
+  verifyOtp(
+    @Body() verifyOtpDto: VerifyOtpDto,
+  ): Promise<UserProfileInfoDto | ErrorDto> {
+    return this.authService.verifyOtp(verifyOtpDto.email, verifyOtpDto.otp);
+  }
+
+  @Post('resendOtp')
+  resendOtp(@Body() resendOtpDto: ResendOtpDto): Promise<string | ErrorDto> {
+    return this.authService.resendOtp(resendOtpDto.email);
   }
 }

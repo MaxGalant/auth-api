@@ -12,6 +12,8 @@ import * as bcrypt from 'bcrypt';
 import { TokenOutputDto } from './dto';
 import { CustomConfigService } from '../../config/customConfig.service';
 import { UserService } from '../user/user.service';
+import { UserProfileInfoDto } from '../user/dto';
+import { MailService } from '../mail/mail.service';
 
 export interface IAuthService {
   validateUser(loginDto: LoginDto): Promise<User | ErrorDto>;
@@ -31,6 +33,7 @@ export class AuthService implements IAuthService {
     private readonly refreshTokenService: JwtService,
     private readonly configService: CustomConfigService,
     private readonly userService: UserService,
+    private readonly mailService: MailService,
   ) {
     const accessTokenPrivateKey = configService.getAccessTokenPrivateKey();
     const accessTokenPublicKey = configService.getAccessTokenPublicKey();
@@ -144,6 +147,8 @@ export class AuthService implements IAuthService {
   }
 
   async googleLogin(req) {
+    this.logger.log('Login user by google');
+
     try {
       const googleUser = req.user;
 
@@ -154,6 +159,88 @@ export class AuthService implements IAuthService {
       }
 
       return this.getTokenPair(user);
+    } catch (error) {
+      this.logger.error(
+        'Something went wrong when  user login by Google',
+        error?.stack,
+      );
+
+      return new ErrorDto(
+        500,
+        'Server error',
+        'Something went wrong when  user login by Google',
+      );
+    }
+  }
+
+  async verifyOtp(
+    email: string,
+    otp: string,
+  ): Promise<UserProfileInfoDto | ErrorDto> {
+    this.logger.log("Verifying user's otp");
+
+    try {
+      const user = await this.userRepository.findByEmailAndOtp(email, otp);
+
+      if (!user) {
+        return new ErrorDto(
+          404,
+          'Not Found',
+          `User with email: ${email} doesn't exists or invalid otp`,
+        );
+      }
+
+      if (user.otp_lifetime > new Date()) {
+        return new ErrorDto(409, 'Conflict', `Otp expired`);
+      }
+
+      await this.userRepository.updateUserFields(user.id, {
+        active: true,
+      });
+
+      return user;
+    } catch (error) {
+      this.logger.error(
+        "Something went wrong when verifying user's otp",
+        error?.stack,
+      );
+
+      return new ErrorDto(
+        500,
+        'Server error',
+        "Something went wrong when verifying user's otp",
+      );
+    }
+  }
+
+  async resendOtp(email: string): Promise<string | ErrorDto> {
+    this.logger.log('Resending a new otp to user');
+
+    try {
+      const user = await this.userRepository.findByEmailNonActive(email);
+
+      if (!user) {
+        return new ErrorDto(
+          404,
+          'Not Found',
+          `User with email: ${email} doesn't exists`,
+        );
+      }
+
+      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+
+      const mailSubject = 'Otp code';
+
+      const mailText = `Your new otp: ${newOtp}`;
+
+      await this.mailService.sendEmail(email, mailSubject, mailText);
+
+      await this.userRepository.updateUserFields(user.id, {
+        otp: newOtp,
+        otp_lifetime: new Date(new Date().getTime() + 15 * 60000),
+      });
+
+      return 'Otp was successfully resend';
     } catch (error) {
       this.logger.error(
         'Something went wrong when  user login by Google',

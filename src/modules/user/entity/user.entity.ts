@@ -27,7 +27,6 @@ export class User {
   email: string;
 
   @Column({
-    length: 30,
     nullable: true,
   })
   password: string;
@@ -40,6 +39,12 @@ export class User {
 
   @Column({ nullable: true })
   otp: string;
+
+  @Column({
+    type: 'timestamptz',
+    default: () => `timezone('utc', now()) + interval '15 minutes'`,
+  })
+  otp_lifetime: Date;
 
   @Column({ nullable: true })
   refresh_token: string;
