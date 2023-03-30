@@ -9,38 +9,29 @@ import {
 } from '../../user/repository/user.repository';
 import { Request } from 'express';
 import { User } from '../../user/entity';
-import { JwtTokenConfigDto } from '../../../config/dto/jwt-token-config.dto';
 
 @Injectable()
 export class RefreshTokenStrategy extends PassportStrategy(
   Strategy,
   'refresh-token',
 ) {
-  private readonly tokenConfig: JwtTokenConfigDto;
-
   constructor(
     private readonly configService: CustomConfigService,
     @InjectRepository(UserRepository)
     private readonly userRepository: IUserRepository,
   ) {
+    const tokenConfig = configService.getAccessTokenConfig();
+
     super({
       jwtFromRequest: ExtractJwt.fromBodyField('refreshToken'),
       ignoreExpiration: false,
       secretOrKey: configService.getRefreshTokenSecretKey(),
       passReqToCallback: true,
+      audience: tokenConfig.aud,
+      issuer: tokenConfig.iss,
     });
-
-    this.tokenConfig = configService.getRefreshTokenConfig();
   }
   async validate(req: Request, payload: any): Promise<User> {
-    if (
-      !payload ||
-      payload.aud !== this.tokenConfig.aud ||
-      payload.iss !== this.tokenConfig.iss
-    ) {
-      throw new UnauthorizedException();
-    }
-
     const token = req.body.refreshToken.split('.')[2];
 
     const user = await this.userRepository.findById(payload.id);

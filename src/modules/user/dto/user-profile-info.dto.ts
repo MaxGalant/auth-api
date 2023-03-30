@@ -8,7 +8,8 @@ export class UserProfileInfoDto extends User {
   refresh_token: string;
   @Exclude()
   otp: string;
-
+  @Exclude()
+  otp_lifetime: Date;
   @Exclude()
   active: boolean;
 }

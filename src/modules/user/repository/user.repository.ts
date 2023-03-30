@@ -2,9 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { DataSource, EntityManager, Repository, UpdateResult } from 'typeorm';
 import { User } from '../entity';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { CreateUserDto } from '../dto';
-import { UpdateUserDto } from '../dto/update-user.dto';
 import { GoogleUserDto } from '../../auth/dto';
+import { CreateUserDto, UpdateUserDto } from '../dto';
 
 export interface IUserRepository {
   saveUser(
@@ -26,9 +25,9 @@ export interface IUserRepository {
 
   findByEmailAndActive(email: string): Promise<User>;
   findByEmail(email: string): Promise<User>;
-  findByEmailNonActive(email: string): Promise<User>;
   findById(id: string): Promise<User>;
   findByEmailAndOtp(email: string, otp: string): Promise<User>;
+  findByOtpAndActive(otp: string): Promise<User>;
 }
 
 @Injectable()
@@ -78,19 +77,6 @@ export class UserRepository
     } catch (error) {
       this.logger.error(
         `Something went wrong when finding an active user with email:${email}`,
-        error?.stack,
-      );
-    }
-  }
-
-  async findByEmailNonActive(email: string): Promise<User> {
-    this.logger.log(`Finding an non active user with email:${email}`);
-
-    try {
-      return this.findOne({ where: { email, active: false } });
-    } catch (error) {
-      this.logger.error(
-        `Something went wrong when finding a non active user with email:${email}`,
         error?.stack,
       );
     }
@@ -184,6 +170,19 @@ export class UserRepository
     } catch (error) {
       this.logger.error(
         `Something went wrong when finding a user by email: ${email} and otp: ${otp}`,
+        error?.stack,
+      );
+    }
+  }
+
+  async findByOtpAndActive(otp: string): Promise<User> {
+    this.logger.log(`Finding a user by otp: ${otp} and active`);
+
+    try {
+      return this.findOne({ where: { otp, active: true } });
+    } catch (error) {
+      this.logger.error(
+        `Something went wrong when finding a user by otp: ${otp} and active`,
         error?.stack,
       );
     }

@@ -14,17 +14,20 @@ import { CustomConfigService } from '../../config/customConfig.service';
 import { UserService } from '../user/user.service';
 import { UserProfileInfoDto } from '../user/dto';
 import { MailService } from '../mail/mail.service';
+import { plainToClass } from 'class-transformer';
 
 export interface IAuthService {
   validateUser(loginDto: LoginDto): Promise<User | ErrorDto>;
   getTokenPair(user: User): Promise<TokenOutputDto>;
   login(loginDto: LoginDto): Promise<any>;
   refresh(req): Promise<TokenOutputDto>;
+  setNewPassword(otp: string, password: string): Promise<string | ErrorDto>;
 }
 
 @Injectable()
 export class AuthService implements IAuthService {
   private logger = new Logger('Auth Service');
+  private hashSalt = 10;
 
   constructor(
     @InjectRepository(UserRepository)
@@ -183,14 +186,10 @@ export class AuthService implements IAuthService {
       const user = await this.userRepository.findByEmailAndOtp(email, otp);
 
       if (!user) {
-        return new ErrorDto(
-          404,
-          'Not Found',
-          `User with email: ${email} doesn't exists or invalid otp`,
-        );
+        return new ErrorDto(404, 'Not Found', `Invalid otp`);
       }
 
-      if (user.otp_lifetime > new Date()) {
+      if (user.otp_lifetime < new Date()) {
         return new ErrorDto(409, 'Conflict', `Otp expired`);
       }
 
@@ -198,7 +197,7 @@ export class AuthService implements IAuthService {
         active: true,
       });
 
-      return user;
+      return plainToClass(UserProfileInfoDto, user);
     } catch (error) {
       this.logger.error(
         "Something went wrong when verifying user's otp",
@@ -217,7 +216,7 @@ export class AuthService implements IAuthService {
     this.logger.log('Resending a new otp to user');
 
     try {
-      const user = await this.userRepository.findByEmailNonActive(email);
+      const user = await this.userRepository.findByEmail(email);
 
       if (!user) {
         return new ErrorDto(
@@ -251,6 +250,39 @@ export class AuthService implements IAuthService {
         500,
         'Server error',
         'Something went wrong when  user login by Google',
+      );
+    }
+  }
+
+  async setNewPassword(
+    otp: string,
+    password: string,
+  ): Promise<string | ErrorDto> {
+    this.logger.log("Setting a new user's password");
+
+    try {
+      const user = await this.userRepository.findByOtpAndActive(otp);
+
+      if (!user) {
+        return new ErrorDto(404, 'Not Found', `Invalid otp`);
+      }
+
+      if (user.otp_lifetime < new Date()) {
+        return new ErrorDto(409, 'Conflict', `Otp expired`);
+      }
+
+      const newPassword = await bcrypt.hash(password, this.hashSalt);
+
+      await this.userRepository.updateUserFields(user.id, {
+        password: newPassword,
+      });
+
+      return 'Password successfully updated';
+    } catch (error) {
+      return new ErrorDto(
+        500,
+        'Server error',
+        "Something went wrong when setting a new user's password",
       );
     }
   }

@@ -8,6 +8,7 @@ import { plainToClass } from 'class-transformer';
 import * as bcrypt from 'bcrypt';
 import { GoogleUserDto } from '../auth/dto';
 import { MailService } from '../mail/mail.service';
+import { UserRequestInterface } from './interfaces';
 
 export interface IUserService {
   createUser(
@@ -149,6 +150,42 @@ export class UserService implements IUserService {
       );
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  async updatePassword(
+    req: UserRequestInterface,
+    oldPassword: string,
+    newPassword: string,
+  ): Promise<string | ErrorDto> {
+    this.logger.log("Updating a user's password");
+
+    try {
+      const { user } = req;
+
+      if (!user) {
+        return new ErrorDto(404, 'Not Found', `User doesn't exist`);
+      }
+
+      const isValidPassword = await bcrypt.compare(oldPassword, user.password);
+
+      if (!isValidPassword) {
+        return new ErrorDto(401, 'Unauthorized', `Invalid password`);
+      }
+
+      const newHashedPassword = await bcrypt.hash(newPassword, this.hashSalt);
+
+      await this.userRepository.updateUserFields(user.id, {
+        password: newHashedPassword,
+      });
+
+      return 'Password successfully updated';
+    } catch (error) {
+      return new ErrorDto(
+        500,
+        'Server error',
+        "Something went wrong when updating a  user's password",
+      );
     }
   }
 }

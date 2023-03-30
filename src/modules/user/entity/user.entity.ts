@@ -42,7 +42,8 @@ export class User {
 
   @Column({
     type: 'timestamptz',
-    default: () => `timezone('utc', now()) + interval '15 minutes'`,
+    default: () =>
+      `CURRENT_TIMESTAMP + INTERVAL '15 minutes' AT TIME ZONE 'Europe/Kiev'`,
   })
   otp_lifetime: Date;
 
@@ -60,9 +61,15 @@ export class User {
   })
   role: RoleEnum;
 
-  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({
+    type: 'timestamp',
+    default: () => `CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Kiev'`,
+  })
   created_at: Date;
 
-  @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @UpdateDateColumn({
+    type: 'timestamp',
+    default: () => `CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Kiev'`,
+  })
   updated_at: Date;
 }

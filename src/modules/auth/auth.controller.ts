@@ -2,7 +2,7 @@ import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { ErrorDto } from '../../utills/error.dto';
 import { CreateUserDto, UserProfileInfoDto } from '../user/dto';
-import { LoginDto, ResendOtpDto, VerifyOtpDto } from './dto';
+import { LoginDto, ResendOtpDto, SetNewPasswordDto, VerifyOtpDto } from './dto';
 import { AuthService } from './auth.service';
 import { TokenOutputDto } from './dto';
 import { RefreshTokenGuard } from './gurds';
@@ -16,26 +16,26 @@ export class AuthController {
     private readonly authService: AuthService,
   ) {}
 
-  @Post('/signup')
+  @Post('sign-up')
   async signUp(
     @Body() createUserDto: CreateUserDto,
   ): Promise<UserProfileInfoDto | ErrorDto> {
     return this.userService.createUser(createUserDto);
   }
 
-  @Post('/login')
+  @Post('login')
   async login(@Body() loginDto: LoginDto): Promise<TokenOutputDto | ErrorDto> {
     return this.authService.login(loginDto);
   }
 
   @UseGuards(RefreshTokenGuard)
-  @Post('/refresh')
+  @Post('refresh')
   async refresh(@Req() req: Request): Promise<TokenOutputDto> {
     return this.authService.refresh(req);
   }
 
   @UseGuards(GoogleAuthGuard)
-  @Get('/google')
+  @Get('google')
   async googleAuth() {
     return 'success';
   }
@@ -46,15 +46,25 @@ export class AuthController {
     return this.authService.googleLogin(req);
   }
 
-  @Post('verifyOtp')
+  @Post('verify-otp')
   verifyOtp(
     @Body() verifyOtpDto: VerifyOtpDto,
   ): Promise<UserProfileInfoDto | ErrorDto> {
     return this.authService.verifyOtp(verifyOtpDto.email, verifyOtpDto.otp);
   }
 
-  @Post('resendOtp')
+  @Post('resend-otp')
   resendOtp(@Body() resendOtpDto: ResendOtpDto): Promise<string | ErrorDto> {
     return this.authService.resendOtp(resendOtpDto.email);
+  }
+
+  @Post('set-new-password')
+  setNewPassword(
+    @Body() setNewPasswordDto: SetNewPasswordDto,
+  ): Promise<string | ErrorDto> {
+    return this.authService.setNewPassword(
+      setNewPasswordDto.otp,
+      setNewPasswordDto.password,
+    );
   }
 }
