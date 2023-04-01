@@ -67,7 +67,9 @@ export class AuthService implements IAuthService {
   }
 
   public async validateUser(loginDto: LoginDto): Promise<User | ErrorDto> {
-    const user = await this.userRepository.findByEmailAndActive(loginDto.email);
+    const user = await this.userRepository.findOneByEmailAndActive(
+      loginDto.email,
+    );
 
     if (!user) {
       return new ErrorDto(401, 'Unauthorized', `Invalid password or email`);
@@ -183,7 +185,7 @@ export class AuthService implements IAuthService {
     this.logger.log("Verifying user's otp");
 
     try {
-      const user = await this.userRepository.findByEmailAndOtp(email, otp);
+      const user = await this.userRepository.findOneByEmailAndOtp(email, otp);
 
       if (!user) {
         return new ErrorDto(404, 'Not Found', `Invalid otp`);
@@ -193,7 +195,7 @@ export class AuthService implements IAuthService {
         return new ErrorDto(409, 'Conflict', `Otp expired`);
       }
 
-      await this.userRepository.updateUserFields(user.id, {
+      await this.userRepository.updateFields(user.id, {
         active: true,
       });
 
@@ -216,7 +218,7 @@ export class AuthService implements IAuthService {
     this.logger.log('Resending a new otp to user');
 
     try {
-      const user = await this.userRepository.findByEmail(email);
+      const user = await this.userRepository.findOneByEmail(email);
 
       if (!user) {
         return new ErrorDto(
@@ -234,7 +236,7 @@ export class AuthService implements IAuthService {
 
       await this.mailService.sendEmail(email, mailSubject, mailText);
 
-      await this.userRepository.updateUserFields(user.id, {
+      await this.userRepository.updateFields(user.id, {
         otp: newOtp,
         otp_lifetime: new Date(new Date().getTime() + 15 * 60000),
       });
@@ -261,7 +263,7 @@ export class AuthService implements IAuthService {
     this.logger.log("Setting a new user's password");
 
     try {
-      const user = await this.userRepository.findByOtpAndActive(otp);
+      const user = await this.userRepository.findOneByOtpAndActive(otp);
 
       if (!user) {
         return new ErrorDto(404, 'Not Found', `Invalid otp`);
@@ -273,7 +275,7 @@ export class AuthService implements IAuthService {
 
       const newPassword = await bcrypt.hash(password, this.hashSalt);
 
-      await this.userRepository.updateUserFields(user.id, {
+      await this.userRepository.updateFields(user.id, {
         password: newPassword,
       });
 

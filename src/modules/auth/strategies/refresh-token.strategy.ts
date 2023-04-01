@@ -34,7 +34,7 @@ export class RefreshTokenStrategy extends PassportStrategy(
   async validate(req: Request, payload: any): Promise<User> {
     const token = req.body.refreshToken.split('.')[2];
 
-    const user = await this.userRepository.findById(payload.id);
+    const user = await this.userRepository.findOneById(payload.id);
 
     if (!user) {
       throw new UnauthorizedException('Invalid refresh token');

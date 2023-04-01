@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CreateUserDto, UserProfileInfoDto } from './dto';
+import { CreateUserDto, UpdateUserInfoDto, UserProfileInfoDto } from './dto';
 import { IUserRepository, UserRepository } from './repository/user.repository';
 import { ErrorDto } from '../../utills/error.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,6 +9,7 @@ import * as bcrypt from 'bcrypt';
 import { GoogleUserDto } from '../auth/dto';
 import { MailService } from '../mail/mail.service';
 import { UserRequestInterface } from './interfaces';
+import { User } from './entity';
 
 export interface IUserService {
   createUser(
@@ -17,6 +18,18 @@ export interface IUserService {
   createGoogleUser(
     googleUserDto: GoogleUserDto,
   ): Promise<UserProfileInfoDto | ErrorDto>;
+  updatePassword(
+    req: UserRequestInterface,
+    oldPassword: string,
+    newPassword: string,
+  ): Promise<string | ErrorDto>;
+  updateInfo(
+    req: UserRequestInterface,
+    updateUserInfoDto: UpdateUserInfoDto,
+  ): Promise<string | ErrorDto>;
+  getById(userId: string): Promise<User | ErrorDto>;
+  getByIds(userId: string[]): Promise<UserProfileInfoDto[] | ErrorDto>;
+  search(name: string): Promise<UserProfileInfoDto[] | ErrorDto>;
 }
 
 @Injectable()
@@ -48,7 +61,7 @@ export class UserService implements IUserService {
     try {
       const { email, password } = createUserDto;
 
-      const user = await this.userRepository.findByEmail(email);
+      const user = await this.userRepository.findOneByEmail(email);
 
       if (user) {
         return new ErrorDto(
@@ -113,12 +126,14 @@ export class UserService implements IUserService {
         return new ErrorDto(404, 'Not Found', `User from google doesn't exist`);
       }
 
-      const user = await this.userRepository.findByEmail(googleUserDto.email);
+      const user = await this.userRepository.findOneByEmail(
+        googleUserDto.email,
+      );
 
       if (user && user.active) {
         return plainToClass(UserProfileInfoDto, user);
       } else if (user && !user.active) {
-        const activatedUser = this.userRepository.updateUserFields(user.id, {
+        const activatedUser = this.userRepository.updateFields(user.id, {
           first_name: googleUserDto.firstName,
           second_name: googleUserDto.lastName,
           active: true,
@@ -163,10 +178,6 @@ export class UserService implements IUserService {
     try {
       const { user } = req;
 
-      if (!user) {
-        return new ErrorDto(404, 'Not Found', `User doesn't exist`);
-      }
-
       const isValidPassword = await bcrypt.compare(oldPassword, user.password);
 
       if (!isValidPassword) {
@@ -175,7 +186,7 @@ export class UserService implements IUserService {
 
       const newHashedPassword = await bcrypt.hash(newPassword, this.hashSalt);
 
-      await this.userRepository.updateUserFields(user.id, {
+      await this.userRepository.updateFields(user.id, {
         password: newHashedPassword,
       });
 
@@ -185,6 +196,82 @@ export class UserService implements IUserService {
         500,
         'Server error',
         "Something went wrong when updating a  user's password",
+      );
+    }
+  }
+
+  async updateInfo(
+    req: UserRequestInterface,
+    updateUserInfoDto: UpdateUserInfoDto,
+  ): Promise<string | ErrorDto> {
+    this.logger.log("Updating a user's profile indo");
+    try {
+      const { user } = req;
+
+      await this.userRepository.updateFields(user.id, updateUserInfoDto);
+
+      return "User's profile info successfully updated";
+    } catch (error) {
+      return new ErrorDto(
+        500,
+        'Server error',
+        "Something went wrong when updating a user's profile info",
+      );
+    }
+  }
+
+  async getById(userId: string): Promise<UserProfileInfoDto | ErrorDto> {
+    this.logger.log('Getting a user by id"');
+    try {
+      const user = await this.userRepository.findOneByIdAndRoleUser(userId);
+
+      if (!user) {
+        return new ErrorDto(
+          404,
+          'Not Found',
+          `User with id:${userId} doesn't exist`,
+        );
+      }
+
+      return plainToClass(UserProfileInfoDto, user);
+    } catch (error) {
+      return new ErrorDto(
+        500,
+        'Server error',
+        'Something went wrong when getting a user by id',
+      );
+    }
+  }
+
+  async getByIds(usersIds: string[]): Promise<UserProfileInfoDto[] | ErrorDto> {
+    this.logger.log('Getting users by ids"');
+    try {
+      const users = await this.userRepository.findManyByIdsAndRoleUser(
+        usersIds,
+      );
+
+      return plainToClass(UserProfileInfoDto, users);
+    } catch (error) {
+      return new ErrorDto(
+        500,
+        'Server error',
+        'Something went wrong when getting users by ids',
+      );
+    }
+  }
+
+  async search(name: string): Promise<UserProfileInfoDto[] | ErrorDto> {
+    this.logger.log(`Searching users by name: ${name}`);
+
+    try {
+      const users = await this.userRepository.findManyByNameAndRoleUser(name);
+
+      return plainToClass(UserProfileInfoDto, users);
+    } catch (error) {
+      return new ErrorDto(
+        500,
+        'Server error',
+        `Something went wrong when searching users by name: ${name}`,
       );
     }
   }

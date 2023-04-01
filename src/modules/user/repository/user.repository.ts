@@ -1,6 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DataSource, EntityManager, Repository, UpdateResult } from 'typeorm';
-import { User } from '../entity';
+import {
+  DataSource,
+  EntityManager,
+  In,
+  Repository,
+  UpdateResult,
+} from 'typeorm';
+import { RoleEnum, User } from '../entity';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { GoogleUserDto } from '../../auth/dto';
 import { CreateUserDto, UpdateUserDto } from '../dto';
@@ -17,17 +23,20 @@ export interface IUserRepository {
     manager: EntityManager,
   ): Promise<User>;
 
-  updateUserFields(
+  updateFields(
     userId: string,
     updateUserDto: UpdateUserDto,
   ): Promise<UpdateResult>;
   updateRefreshToken(userId: string, token: string): Promise<UpdateResult>;
 
-  findByEmailAndActive(email: string): Promise<User>;
-  findByEmail(email: string): Promise<User>;
-  findById(id: string): Promise<User>;
-  findByEmailAndOtp(email: string, otp: string): Promise<User>;
-  findByOtpAndActive(otp: string): Promise<User>;
+  findOneByEmailAndActive(email: string): Promise<User>;
+  findOneByEmail(email: string): Promise<User>;
+  findOneById(id: string): Promise<User>;
+  findOneByIdAndRoleUser(id: string): Promise<User>;
+  findManyByIdsAndRoleUser(ids: string[]): Promise<User[]>;
+  findOneByEmailAndOtp(email: string, otp: string): Promise<User>;
+  findOneByOtpAndActive(otp: string): Promise<User>;
+  findManyByNameAndRoleUser(name: string): Promise<User[]>;
 }
 
 @Injectable()
@@ -69,7 +78,7 @@ export class UserRepository
     }
   }
 
-  async findByEmailAndActive(email: string): Promise<User> {
+  async findOneByEmailAndActive(email: string): Promise<User> {
     this.logger.log(`Finding an active user with email:${email}`);
 
     try {
@@ -82,7 +91,7 @@ export class UserRepository
     }
   }
 
-  async findByEmail(email: string): Promise<User> {
+  async findOneByEmail(email: string): Promise<User> {
     this.logger.log(`Finding a user with email:${email}`);
 
     try {
@@ -111,7 +120,7 @@ export class UserRepository
     }
   }
 
-  async findById(id: string): Promise<User> {
+  async findOneById(id: string): Promise<User> {
     this.logger.log(`Finding a user by id: ${id}`);
 
     try {
@@ -146,7 +155,7 @@ export class UserRepository
     }
   }
 
-  async updateUserFields(
+  async updateFields(
     userId: string,
     updateUserDto: UpdateUserDto,
   ): Promise<UpdateResult> {
@@ -162,7 +171,7 @@ export class UserRepository
     }
   }
 
-  async findByEmailAndOtp(email: string, otp: string): Promise<User> {
+  async findOneByEmailAndOtp(email: string, otp: string): Promise<User> {
     this.logger.log(`Finding a user by email: ${email} and otp: ${otp}`);
 
     try {
@@ -175,7 +184,7 @@ export class UserRepository
     }
   }
 
-  async findByOtpAndActive(otp: string): Promise<User> {
+  async findOneByOtpAndActive(otp: string): Promise<User> {
     this.logger.log(`Finding a user by otp: ${otp} and active`);
 
     try {
@@ -183,6 +192,54 @@ export class UserRepository
     } catch (error) {
       this.logger.error(
         `Something went wrong when finding a user by otp: ${otp} and active`,
+        error?.stack,
+      );
+    }
+  }
+
+  async findOneByIdAndRoleUser(id: string): Promise<User> {
+    this.logger.log(`Finding a user by id: ${id} and role 'user'`);
+
+    try {
+      return this.findOne({ where: { id, role: RoleEnum.USER } });
+    } catch (error) {
+      this.logger.error(
+        `Something went wrong when finding a user by id: ${id} and role 'user'`,
+        error?.stack,
+      );
+    }
+  }
+
+  async findManyByIdsAndRoleUser(ids: string[]): Promise<User[]> {
+    this.logger.log(`Finding users with ids: ${ids} and role 'user'`);
+
+    try {
+      return this.find({
+        where: {
+          id: In(ids),
+          role: RoleEnum.USER,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Something went wrong when finding a user by id: ${ids} and role 'user'`,
+        error?.stack,
+      );
+    }
+  }
+
+  async findManyByNameAndRoleUser(name: string): Promise<User[]> {
+    this.logger.log(`Finding users by name ${name} and role 'user'`);
+
+    try {
+      return this.createQueryBuilder('user')
+        .where('user.first_name LIKE :name', { name: `%${name}%` })
+        .orWhere('user.second_name LIKE :name', { name: `%${name}%` })
+        .orWhere('user.nickname LIKE :name', { name: `%${name}%` })
+        .getMany();
+    } catch (error) {
+      this.logger.error(
+        `Something went wrong when finding users by name ${name} and role 'user'`,
         error?.stack,
       );
     }

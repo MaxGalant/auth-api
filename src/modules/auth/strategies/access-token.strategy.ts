@@ -8,6 +8,7 @@ import {
   UserRepository,
 } from '../../user/repository/user.repository';
 import { User } from '../../user/entity';
+import { ErrorDto } from '../../../utills/error.dto';
 
 @Injectable()
 export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -28,6 +29,12 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(payload: any): Promise<User> {
-    return this.userRepository.findById(payload.sub.id);
+    const user = await this.userRepository.findOneById(payload.sub.id);
+
+    if (!user) {
+      throw new ErrorDto(404, 'Not Found', `User doesn't exist`);
+    }
+
+    return user;
   }
 }

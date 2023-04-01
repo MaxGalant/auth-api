@@ -12,4 +12,8 @@ export class UserProfileInfoDto extends User {
   otp_lifetime: Date;
   @Exclude()
   active: boolean;
+  @Exclude()
+  created_at: Date;
+  @Exclude()
+  updated_at: Date;
 }
