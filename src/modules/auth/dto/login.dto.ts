@@ -5,8 +5,10 @@ import {
   Matches,
   MinLength,
 } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class LoginDto {
+  @ApiProperty()
   @IsNotEmpty({ message: 'Please enter field: email' })
   @IsEmail(
     {},
@@ -16,6 +18,7 @@ export class LoginDto {
   )
   email: string;
 
+  @ApiProperty()
   @IsNotEmpty({ message: 'Please enter field: password' })
   @IsString({ message: 'Invalid type' })
   @MinLength(8, { message: 'Password must be at least 8 characters long' })

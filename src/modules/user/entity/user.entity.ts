@@ -6,21 +6,27 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { RoleEnum } from './role.enum';
+import { ApiProperty } from '@nestjs/swagger';
 
 @Entity()
 export class User {
+  @ApiProperty()
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @ApiProperty()
   @Column()
   first_name: string;
 
+  @ApiProperty()
   @Column()
   second_name: string;
 
+  @ApiProperty()
   @Column({ nullable: true })
   nickname: string;
 
+  @ApiProperty()
   @Column({
     unique: true,
   })
@@ -31,6 +37,7 @@ export class User {
   })
   password: string;
 
+  @ApiProperty()
   @Column({
     nullable: true,
     length: 12,
@@ -53,6 +60,7 @@ export class User {
   @Column({ default: false })
   active: boolean;
 
+  @ApiProperty()
   @Column({
     type: 'enum',
     nullable: false,

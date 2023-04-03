@@ -6,20 +6,25 @@ import {
   Matches,
   MinLength,
 } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserDto {
+  @ApiProperty()
   @IsNotEmpty({ message: 'Please enter field: firstName' })
   @IsString({ message: 'Invalid type' })
   firstName: string;
 
+  @ApiProperty()
   @IsNotEmpty({ message: 'Please enter field: secondName' })
   @IsString({ message: 'Invalid type' })
   secondName: string;
 
+  @ApiProperty()
   @IsNotEmpty({ message: 'Please enter field: nickname' })
   @IsString({ message: 'Invalid type' })
   nickname: string;
 
+  @ApiProperty()
   @IsNotEmpty({ message: 'Please enter field: email' })
   @IsEmail(
     {},
@@ -29,6 +34,7 @@ export class CreateUserDto {
   )
   email: string;
 
+  @ApiProperty()
   @IsNotEmpty({ message: 'Please enter field: password' })
   @IsString({ message: 'Invalid type' })
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
@@ -38,6 +44,7 @@ export class CreateUserDto {
   })
   password: string;
 
+  @ApiProperty({ required: false })
   @IsOptional()
   @IsString({ message: 'Invalid type' })
   phoneNumber?: string;

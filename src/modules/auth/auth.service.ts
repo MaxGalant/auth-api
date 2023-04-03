@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto';
-import { ErrorDto } from '../../utills/error.dto';
+import { ErrorDto } from '../../utills';
 import { User } from '../user/entity';
 import * as bcrypt from 'bcrypt';
 import { TokenOutputDto } from './dto';
@@ -151,7 +151,7 @@ export class AuthService implements IAuthService {
     }
   }
 
-  async googleLogin(req) {
+  async googleLogin(req): Promise<TokenOutputDto | ErrorDto> {
     this.logger.log('Login user by google');
 
     try {
@@ -244,14 +244,14 @@ export class AuthService implements IAuthService {
       return 'Otp was successfully resend';
     } catch (error) {
       this.logger.error(
-        'Something went wrong when  user login by Google',
+        'Something went wrong when resending otp',
         error?.stack,
       );
 
       return new ErrorDto(
         500,
         'Server error',
-        'Something went wrong when  user login by Google',
+        'Something went wrong when resending otp',
       );
     }
   }

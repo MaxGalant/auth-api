@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CreateUserDto, UpdateUserInfoDto, UserProfileInfoDto } from './dto';
 import { IUserRepository, UserRepository } from './repository/user.repository';
-import { ErrorDto } from '../../utills/error.dto';
+import { ErrorDto } from '../../utills';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { plainToClass } from 'class-transformer';
@@ -181,7 +181,7 @@ export class UserService implements IUserService {
       const isValidPassword = await bcrypt.compare(oldPassword, user.password);
 
       if (!isValidPassword) {
-        return new ErrorDto(401, 'Unauthorized', `Invalid password`);
+        return new ErrorDto(400, 'Unauthorized', `Invalid password`);
       }
 
       const newHashedPassword = await bcrypt.hash(newPassword, this.hashSalt);
