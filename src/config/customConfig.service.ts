@@ -2,6 +2,7 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { config } from 'dotenv';
 import { GoogleCredentialsDto, MailgunCredentialsDto } from './dto';
 import { JwtTokenConfigDto } from './dto';
+import * as fs from 'fs';
 
 config();
 
@@ -58,11 +59,23 @@ export class CustomConfigService {
   }
 
   public getAccessTokenPrivateKey(): string {
-    return this.getEnvVariableValue('PRIVATE_KEY');
+    const filePath = `${__dirname}/../../keys/private.pem`;
+
+    if (!fs.existsSync(filePath)) {
+      return this.getEnvVariableValue('PRIVATE_KEY');
+    }
+
+    return fs.readFileSync(filePath, 'utf-8');
   }
 
   public getAccessTokenPublicKey(): string {
-    return this.getEnvVariableValue('PUBLIC_KEY');
+    const filePath = `${__dirname}/../../keys/public.pem`;
+
+    if (!fs.existsSync(filePath)) {
+      return this.getEnvVariableValue('PUBLIC_KEY');
+    }
+
+    return fs.readFileSync(filePath, 'utf-8');
   }
 
   public getRefreshTokenSecretKey(): string {

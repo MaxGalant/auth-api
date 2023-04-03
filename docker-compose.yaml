@@ -9,7 +9,12 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "${DB_PORT}:5432"
+    networks:
+      - syncIn
     volumes:
       - db-data:/var/lib/postgresql/data
 volumes:
   db-data:
+networks:
+  syncIn:
+    driver: bridge
