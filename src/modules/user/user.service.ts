@@ -98,7 +98,7 @@ export class UserService implements IUserService {
     } catch (error) {
       this.logger.error('Something went wrong when create user', error?.stack);
 
-      await queryRunner.startTransaction();
+      await queryRunner.rollbackTransaction();
 
       return new ErrorDto(
         500,
@@ -156,7 +156,7 @@ export class UserService implements IUserService {
         error?.stack,
       );
 
-      await queryRunner.startTransaction();
+      await queryRunner.rollbackTransaction();
 
       return new ErrorDto(
         500,

@@ -20,10 +20,10 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
 
   const config = new DocumentBuilder()
-    .setTitle('Sync In')
+    .setTitle('Sync In Auth Service')
     .setDescription('The Sync In is Hroza-bydlo team product')
     .setVersion('1.0')
-    .addTag('Sync In')
+    .addTag('Sync In Auth')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
