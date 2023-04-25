@@ -2,17 +2,29 @@ version: '3.8'
 services:
   db:
     image: postgres
+    env_file:
+      - .env
     environment:
       TZ: "UTC"
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: 'kursova'
+      POSTGRES_USER: 'max'
+      POSTGRES_PASSWORD: '12345'
     ports:
-      - "${DB_PORT}:5432"
+      - "5432:5432"
     networks:
       - syncIn
     volumes:
       - db-data:/var/lib/postgresql/data
+  app:
+    build: .
+    env_file:
+      - .env
+    ports:
+      - "${PORT}:${PORT}"
+    depends_on:
+      - db
+    networks:
+      - syncIn
 volumes:
   db-data:
 networks:
