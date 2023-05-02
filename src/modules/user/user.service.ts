@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { CreateUserDto, UpdateUserInfoDto, UserProfileInfoDto } from './dto';
 import { IUserRepository, UserRepository } from './repository/user.repository';
 import { ErrorDto } from '../../utills';
@@ -10,6 +10,7 @@ import { GoogleUserDto } from '../auth/dto';
 import { MailService } from '../mail/mail.service';
 import { UserRequestInterface } from './interfaces';
 import { User } from './entity';
+import { ClientProxy } from '@nestjs/microservices';
 
 export interface IUserService {
   createUser(
@@ -43,6 +44,8 @@ export class UserService implements IUserService {
     private readonly userRepository: IUserRepository,
     private readonly dataSource: DataSource,
     private readonly mailService: MailService,
+    @Inject('RABBITMQ_SERVER')
+    private readonly rabbit: ClientProxy,
   ) {}
 
   async createUser(
@@ -93,6 +96,8 @@ export class UserService implements IUserService {
       );
 
       await queryRunner.commitTransaction();
+
+      await this.rabbit.send('create_user', newUser);
 
       return plainToClass(UserProfileInfoDto, newUser);
     } catch (error) {
