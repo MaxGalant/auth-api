@@ -97,7 +97,14 @@ export class UserService implements IUserService {
 
       await queryRunner.commitTransaction();
 
-      await this.rabbit.send('create_user', newUser);
+      await this.rabbit
+        .send('create_user', {
+          id: newUser.id,
+          first_name: newUser.first_name,
+          second_name: newUser.second_name,
+          nickname: newUser.nickname,
+        })
+        .subscribe();
 
       return plainToClass(UserProfileInfoDto, newUser);
     } catch (error) {
