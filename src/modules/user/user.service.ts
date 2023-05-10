@@ -103,6 +103,7 @@ export class UserService implements IUserService {
           first_name: newUser.first_name,
           second_name: newUser.second_name,
           nickname: newUser.nickname,
+          active: true,
         })
         .subscribe();
 
